@@ -1,0 +1,26 @@
+# Routing test - verify planner routes search queries to retriever
+
+task_id: "route_search_001"
+name: "Route product search to retriever"
+type: "atomic"
+category: "routing"
+
+turns:
+  - user: "Show me summer dresses"
+
+init:
+  cart: []
+  context: ""
+
+verify:
+  routing:
+    expected: "retriever"
+  response:
+    not_empty: true
+
+failure_modes:
+  - "wrong_routing"
+
+tags:
+  - "routing"
+  - "search"

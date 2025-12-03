@@ -16,6 +16,10 @@ services:
       - CATALOG_RETRIEVER_URL=http://catalog-retriever:8010
       - MEMORY_RETRIEVER_URL=http://memory-retriever:8011
       - CONFIG_OVERRIDE=${CONFIG_OVERRIDE}
+      # LangSmith observability (set LANGCHAIN_TRACING_V2=true to enable)
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-retail-shopping-assistant}
     volumes:
       - ./shared:/app/shared
     depends_on:

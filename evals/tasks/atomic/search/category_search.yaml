@@ -1,0 +1,39 @@
+# Search test - Category-based product searches
+
+task_id: "search_category_001"
+name: "Search for shoes"
+type: "atomic"
+category: "search"
+
+turns:
+  - user: "What shoes do you have?"
+
+init:
+  cart: []
+  context: ""
+
+verify:
+  routing:
+    expected: "retriever"
+  retrieved:
+    min_count: 1
+  response:
+    not_empty: true
+    contains_any:
+      - "shoe"
+      - "Shoe"
+      - "heel"
+      - "Heel"
+      - "flat"
+      - "Flat"
+      - "sandal"
+      - "Sandal"
+
+failure_modes:
+  - "wrong_routing"
+  - "no_results"
+
+tags:
+  - "search"
+  - "category"
+  - "footwear"

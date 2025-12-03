@@ -6,7 +6,7 @@ version: '3.8'
 services:
 
   llama:
-    image: nvcr.io/nim/meta/llama-3.1-70b-instruct:1.10.1
+    image: nvcr.io/nim/meta/llama-3.1-8b-instruct:1.10.1
     ports:
       - "8000:8000"
     environment:
@@ -20,7 +20,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0', '1']
+              device_ids: ['0']
               capabilities: [gpu]
     restart: "no"
     networks:
@@ -39,7 +39,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2']
+              device_ids: ['1']
               capabilities: [gpu]
     restart: "no"
     networks:
@@ -59,7 +59,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2']
+              device_ids: ['1']
               capabilities: [gpu]
     restart: "no"
     networks:
@@ -80,7 +80,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['2']
+              device_ids: ['1']
               capabilities: [gpu]
     restart: "no"
     networks:
@@ -101,7 +101,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['3']
+              device_ids: ['1']
               capabilities: [gpu]
     restart: "no"
     networks:

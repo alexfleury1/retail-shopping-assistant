@@ -1,0 +1,53 @@
+# Composed task - browse products and add to cart
+
+task_id: "composed_browse_buy_001"
+name: "Browse skirts and add to cart"
+type: "composed"
+category: "end_to_end"
+
+turns:
+  - user: "Show me some skirts"
+    verify:
+      routing:
+        expected: "retriever"
+      retrieved:
+        min_count: 1
+
+  - user: "Tell me more about the first one"
+    verify:
+      routing:
+        expected: "chatter"
+      response:
+        not_empty: true
+
+  - user: "Add it to my cart"
+    verify:
+      routing:
+        expected: "cart"
+      response:
+        contains_any:
+          - "added"
+          - "Added"
+
+init:
+  cart: []
+  context: ""
+
+final_verify:
+  cart:
+    length: 1
+  response:
+    not_empty: true
+
+failure_modes:
+  - "wrong_routing"
+  - "no_results"
+  - "cart_error"
+
+max_turns: 3
+timeout_seconds: 45
+
+tags:
+  - "end_to_end"
+  - "browse"
+  - "cart"
