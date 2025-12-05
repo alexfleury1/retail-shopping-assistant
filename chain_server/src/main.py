@@ -95,6 +95,19 @@ class QueryResponse(BaseModel):
     timings: Dict[str, float] = {}
 
 
+class EvalResponse(BaseModel):
+    """Response model for evaluation queries.
+
+    Exposes additional state fields needed for deterministic verification:
+    - next_agent: The agent that handled the query (routing verification)
+    - retrieved: Products retrieved from search (retrieval verification)
+    """
+    response: str
+    next_agent: str
+    retrieved: Dict[str, str] = {}
+    timings: Dict[str, float] = {}
+
+
 def create_initial_state(request: QueryRequest) -> State:
     """Create initial state from request."""
     return State(
@@ -176,7 +189,47 @@ async def process_query_timing(request: QueryRequest):
     except Exception as e:
         logger.error(f"Error processing timing query: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-        
+
+
+@app.post("/query/eval", response_model=EvalResponse)
+async def process_query_eval(request: QueryRequest):
+    """
+    Process a query and return full state for evaluation.
+
+    This endpoint exposes internal state fields (next_agent, retrieved)
+    needed for deterministic evaluation verification. Used by the eval
+    framework to verify routing decisions and retrieval results.
+    """
+    try:
+        logger.info(f"chain-server | /query/eval | Processing eval query for user {request.user_id}: {request.query}")
+
+        # Create initial state
+        state = create_initial_state(request)
+
+        # Process query
+        start_time = time.monotonic()
+        out_state_dict = await graph.ainvoke(state)
+        end_time = time.monotonic()
+
+        total_time = end_time - start_time
+
+        # Create response with full state for verification
+        response = EvalResponse(
+            response=out_state_dict["response"],
+            next_agent=out_state_dict.get("next_agent", ""),
+            retrieved=out_state_dict.get("retrieved", {}),
+            timings=out_state_dict.get("timings", {})
+        )
+        response.timings["total"] = total_time
+
+        logger.info(f"chain-server | /query/eval | Processed eval query in {total_time:.2f}s, routed to: {response.next_agent}")
+        return response
+
+    except Exception as e:
+        logger.error(f"Error processing eval query: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -197,6 +250,7 @@ async def root():
             "query": "/query",
             "stream": "/query/stream",
             "timing": "/query/timing",
+            "eval": "/query/eval",
             "health": "/health",
             "docs": "/docs"
         }
