@@ -8,6 +8,7 @@ This module defines the standard intents used for evaluation,
 ranging from simple browsing to complex multi-step shopping journeys.
 """
 
+from typing import Optional
 from .base import Intent, DecisionPolicy
 from evals.subtasks import (
     FindProductsSubtask,
@@ -28,12 +29,27 @@ BROWSE = Intent(
     decision_policy=DecisionPolicy(strategy="first"),
 )
 
-DIRECT_PURCHASE = Intent(
-    name="direct_purchase",
-    description="User knows exactly what they want and adds it directly",
-    subtasks=[AddToCartSubtask()],
-    decision_policy=DecisionPolicy(strategy="by_name"),
-)
+def create_direct_purchase_intent(product_name: Optional[str] = None) -> Intent:
+    """
+    Create a direct purchase intent for a specific product.
+
+    Args:
+        product_name: The exact product name to add to cart.
+                     If None, uses a placeholder (will fail - use for testing error handling).
+
+    Returns:
+        Intent configured for direct purchase of the specified product.
+    """
+    return Intent(
+        name="direct_purchase",
+        description=f"User knows exactly what they want ({product_name}) and adds it directly",
+        subtasks=[AddToCartSubtask(explicit_product=product_name)],
+        decision_policy=DecisionPolicy(strategy="by_name", target_name=product_name),
+    )
+
+
+# Default direct purchase intent (placeholder - should use create_direct_purchase_intent with a product)
+DIRECT_PURCHASE = create_direct_purchase_intent("Pearl Bracelet")
 
 
 # =============================================================================

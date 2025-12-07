@@ -8,14 +8,15 @@ This module provides utilities for generating evaluation tasks by combining
 intents with sampled constraints.
 """
 
+import random
 import uuid
 from dataclasses import dataclass, field
 from typing import List, Optional, Iterator, Dict, Any
 from itertools import product as cartesian_product
 
 from evals.core import Constraints
-from evals.intents import Intent, Task, InitState, ALL_INTENTS, get_intent
-from .sampler import ConstraintSampler, ConstraintSpace
+from evals.intents import Intent, Task, InitState, ALL_INTENTS, get_intent, create_direct_purchase_intent
+from .sampler import ConstraintSampler, ConstraintSpace, CATALOG_PRODUCTS
 
 
 @dataclass
@@ -81,19 +82,27 @@ class TaskGenerator:
             List of Tasks
         """
         tasks = []
+        rng = random.Random(self.config.seed) if self.config.seed else random
 
         for i, constraints in enumerate(constraints_list):
-            task_id = f"{intent.name}_{i:03d}_{uuid.uuid4().hex[:8]}"
+            # For direct_purchase, create a unique intent with a sampled product
+            if intent.name == "direct_purchase":
+                product_name, product_price, product_category = rng.choice(CATALOG_PRODUCTS)
+                task_intent = create_direct_purchase_intent(product_name)
+            else:
+                task_intent = intent
+
+            task_id = f"{task_intent.name}_{i:03d}_{uuid.uuid4().hex[:8]}"
 
             # Determine timeout based on intent complexity
-            timeout = self._get_timeout(intent)
+            timeout = self._get_timeout(task_intent)
 
             tasks.append(Task(
                 task_id=task_id,
-                intent=intent,
+                intent=task_intent,
                 constraints=constraints,
                 init_state=init_state,
-                tags=self._get_tags(intent, constraints),
+                tags=self._get_tags(task_intent, constraints),
                 timeout_seconds=timeout,
             ))
 

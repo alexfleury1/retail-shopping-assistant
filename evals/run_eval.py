@@ -24,7 +24,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from evals.core import Constraints, TaskResult
 from evals.intents import get_intent
-from evals.runner import AgentClient, TaskRunner, BatchRunner, RunConfig
+from evals.runner import (
+    AgentClient,
+    TaskRunner,
+    BatchRunner,
+    RunConfig,
+    DEFAULT_NVIDIA_RPM,
+    DEFAULT_NVIDIA_CALLS_PER_QUERY,
+)
 from evals.generator import TaskGenerator, generate_eval_suite, export_tasks
 
 logger = logging.getLogger(__name__)
@@ -150,10 +157,17 @@ async def main():
     # Server config
     parser.add_argument('--chain-url', type=str, default='http://localhost:8009')
     parser.add_argument('--memory-url', type=str, default='http://localhost:8011')
-    parser.add_argument('--timeout', type=float, default=30.0)
+    parser.add_argument('--timeout', type=float, default=60.0)
+
+    # Rate limiting
+    parser.add_argument('--nvidia-rpm', type=int, default=DEFAULT_NVIDIA_RPM,
+                        help=f'NVIDIA API rate limit (requests per minute). Default: {DEFAULT_NVIDIA_RPM}')
+    parser.add_argument('--nvidia-calls-per-query', type=int, default=DEFAULT_NVIDIA_CALLS_PER_QUERY,
+                        help=f'Estimated NVIDIA API calls per query. Default: {DEFAULT_NVIDIA_CALLS_PER_QUERY}')
 
     # Execution
-    parser.add_argument('--max-concurrent', type=int, default=5)
+    parser.add_argument('--max-concurrent', type=int, default=1,
+                        help='Max concurrent tasks. Default: 1 (sequential, safest for rate limits)')
     parser.add_argument('--verbose', '-v', action='store_true')
 
     # Output
@@ -162,6 +176,10 @@ async def main():
     args = parser.parse_args()
     setup_logging(args.verbose)
 
+    # Calculate effective rate limit for display
+    effective_rpm = (args.nvidia_rpm / args.nvidia_calls_per_query) * 0.9
+    min_interval = 60.0 / effective_rpm
+
     print("=" * 60)
     print("RETAIL SHOPPING ASSISTANT - EVALUATION SUITE")
     print("=" * 60)
@@ -169,6 +187,7 @@ async def main():
     print(f"Memory URL:   {args.memory_url}")
     if args.intent:
         print(f"Intent(s):    {args.intent}")
+    print(f"Rate Limit:   {args.nvidia_rpm} NVIDIA rpm -> ~{effective_rpm:.1f} queries/min ({min_interval:.1f}s interval)")
     print("=" * 60)
     print()
 
@@ -197,6 +216,8 @@ async def main():
         chain_server_url=args.chain_url,
         memory_url=args.memory_url,
         timeout=args.timeout,
+        nvidia_rpm=args.nvidia_rpm,
+        nvidia_calls_per_query=args.nvidia_calls_per_query,
     ) as agent:
         try:
             # Single task mode

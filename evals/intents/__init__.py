@@ -8,6 +8,7 @@ from .catalog import (
     # Simple intents
     BROWSE,
     DIRECT_PURCHASE,
+    create_direct_purchase_intent,
     # Medium intents
     DISCOVER_AND_BUY,
     INFORMED_PURCHASE,
@@ -32,6 +33,7 @@ __all__ = [
     # Simple intents
     "BROWSE",
     "DIRECT_PURCHASE",
+    "create_direct_purchase_intent",
     # Medium intents
     "DISCOVER_AND_BUY",
     "INFORMED_PURCHASE",

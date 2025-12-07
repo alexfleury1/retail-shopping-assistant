@@ -177,9 +177,18 @@ class CartAgent():
         )
 
         # Parse our function call.
-        called_tool = response.choices[0].message.tool_calls[0]
+        tool_calls = response.choices[0].message.tool_calls
+        if not tool_calls:
+            # LLM didn't call a tool - likely ambiguous request (e.g., "Add it to my cart" with no context)
+            logging.warning("CartAgent.invoke() | No tool called - request may be ambiguous")
+            output_state = state
+            output_state.response = "I'm not sure which item you'd like to add. Could you please specify the product name?"
+            output_state.timings["cart"] = time.monotonic() - start
+            return output_state
+
+        called_tool = tool_calls[0]
         tool_name = called_tool.function.name
-        tool_args = json.loads(called_tool.function.arguments)  
+        tool_args = json.loads(called_tool.function.arguments)
 
         logging.info(f"CartAgent.invoke() | Tool name: {tool_name}")
 

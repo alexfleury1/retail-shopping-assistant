@@ -3,7 +3,12 @@
 
 """Generator module for creating evaluation tasks."""
 
-from .sampler import ConstraintSampler, ConstraintSpace
+from .sampler import (
+    ConstraintSampler,
+    ConstraintSpace,
+    CATALOG_PRODUCTS,
+    sample_catalog_product,
+)
 from .task_generator import TaskGenerator, GeneratorConfig, generate_eval_suite
 from .exporter import (
     export_tasks,
@@ -16,6 +21,8 @@ __all__ = [
     # Sampling
     "ConstraintSampler",
     "ConstraintSpace",
+    "CATALOG_PRODUCTS",
+    "sample_catalog_product",
     # Generation
     "TaskGenerator",
     "GeneratorConfig",

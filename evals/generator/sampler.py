@@ -5,10 +5,36 @@
 
 import random
 from dataclasses import dataclass, field
-from typing import List, Optional, Iterator
+from typing import List, Optional, Iterator, Tuple
 from itertools import product
 
 from evals.core import Constraints
+
+
+# Known products from the catalog for direct purchase testing
+# Format: (name, price, category)
+CATALOG_PRODUCTS: List[Tuple[str, float, str]] = [
+    ("Southwest Bracelet", 169.99, "jewelry"),
+    ("Bella Breeze Hoops", 39.99, "jewelry"),
+    ("Pearl Bracelet", 49.99, "jewelry"),
+    ("Amber Bead Necklace", 49.99, "jewelry"),
+    ("Pastel Pink Peasant Dress", 119.99, "apparel"),
+    ("Halo Hemline Dress", 79.99, "apparel"),
+    ("Navy Fitted Skirt", 159.99, "apparel"),
+    ("Ultra Soft Velvet Skirt", 149.99, "apparel"),
+    ("Kiss Me High Heel Sandals", 159.99, "footwear"),
+    ("Polished Pearl Pumps", 119.99, "footwear"),
+    ("Opulent Velvet Ballet Flats", 159.99, "footwear"),
+    ("Fusion Leather Crossbody Bag", 109.99, "accessories"),
+    ("Kaleidoscope Crossbody Bag", 119.99, "accessories"),
+    ("Xenial Aviator Sunglasses", 39.99, "accessories"),
+]
+
+
+def sample_catalog_product(rng: Optional[random.Random] = None) -> Tuple[str, float, str]:
+    """Sample a random product from the catalog."""
+    r = rng or random
+    return r.choice(CATALOG_PRODUCTS)
 
 
 @dataclass

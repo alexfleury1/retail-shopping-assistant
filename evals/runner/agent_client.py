@@ -195,6 +195,8 @@ class AgentClient:
         chain_server_url: str = "http://localhost:8009",
         memory_url: str = "http://localhost:8011",
         timeout: float = 30.0,
+        nvidia_rpm: int = DEFAULT_NVIDIA_RPM,
+        nvidia_calls_per_query: int = DEFAULT_NVIDIA_CALLS_PER_QUERY,
     ):
         """
         Initialize the agent client.
@@ -203,11 +205,14 @@ class AgentClient:
             chain_server_url: URL of the chain server
             memory_url: URL of the memory retriever
             timeout: Request timeout in seconds
+            nvidia_rpm: NVIDIA API rate limit (requests per minute)
+            nvidia_calls_per_query: Estimated NVIDIA API calls per chain-server query
         """
         self.chain_server_url = chain_server_url.rstrip("/")
         self.memory_url = memory_url.rstrip("/")
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
+        self._rate_limiter = RateLimiter(nvidia_rpm, nvidia_calls_per_query)
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -241,6 +246,11 @@ class AgentClient:
         Raises:
             httpx.HTTPError: If request fails
         """
+        # Rate limit before making chain-server request (which triggers NVIDIA API calls)
+        wait_time = await self._rate_limiter.acquire()
+        if wait_time > 0:
+            logger.info(f"Rate limited: waited {wait_time:.1f}s before query")
+
         logger.info(f"Query for user {user_id}: {query[:50]}...")
 
         # Send query to chain server
