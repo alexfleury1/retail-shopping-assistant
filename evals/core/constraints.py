@@ -1,23 +1,18 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Constraints that influence query generation, user decisions, and verification.
-
-The Constraints class is the single source of truth for task requirements,
-flowing through the entire execution pipeline.
-"""
+"""Constraints and Product definitions for the evaluation framework."""
 
 from dataclasses import dataclass, asdict
-from typing import Optional, List, Any, Dict
+from typing import Optional
 
 
 @dataclass
 class Product:
-    """Represents a product from the catalog."""
+    """A product from the catalog."""
     name: str
     price: float
-    category: str
+    category: str = ""
     subcategory: Optional[str] = None
     color: Optional[str] = None
     size: Optional[str] = None
@@ -38,7 +33,7 @@ class Constraints:
     """
     Constraints that influence query generation, user decisions, and verification.
 
-    Single source of truth passed through entire execution.
+    This is the single source of truth passed through the entire execution pipeline.
     """
     budget: Optional[float] = None
     color: Optional[str] = None
@@ -48,13 +43,8 @@ class Constraints:
     brand: Optional[str] = None
     occasion: Optional[str] = None
 
-    def to_query_modifiers(self) -> List[str]:
-        """
-        Convert constraints to natural language query parts.
-
-        Returns:
-            List of modifier strings to append to queries
-        """
+    def to_query_modifiers(self) -> list[str]:
+        """Convert constraints to natural language query parts."""
         modifiers = []
         if self.color:
             modifiers.append(f"in {self.color}")
@@ -65,50 +55,23 @@ class Constraints:
         return modifiers
 
     def product_satisfies(self, product: Product) -> bool:
-        """
-        Check if a product satisfies all active constraints.
-
-        Args:
-            product: Product to check
-
-        Returns:
-            True if product satisfies all constraints
-        """
+        """Check if a product satisfies all active constraints."""
         if self.budget is not None and product.price > self.budget:
             return False
-        if self.color is not None:
-            # Check color field first, then fall back to name matching
-            if product.color:
-                if self.color.lower() != product.color.lower():
-                    return False
-            # No color info - trust the agent returned relevant products
-            # (the query already included the color constraint)
-        if self.category is not None:
-            # Check category field first, then fall back to name matching
-            if product.category:
-                if self.category.lower() not in product.category.lower():
-                    return False
-            # No category info - trust the agent returned relevant products
-            # (the query already included the category constraint)
-        if self.subcategory is not None:
-            if product.subcategory and self.subcategory.lower() not in product.subcategory.lower():
+        if self.category and product.category:
+            if self.category.lower() not in product.category.lower():
+                return False
+        if self.subcategory and product.subcategory:
+            if self.subcategory.lower() not in product.subcategory.lower():
                 return False
         return True
 
-    def filter_products(self, products: List[Product]) -> List[Product]:
-        """
-        Return only products that satisfy constraints.
-
-        Args:
-            products: List of products to filter
-
-        Returns:
-            Filtered list of products satisfying all constraints
-        """
+    def filter_products(self, products: list[Product]) -> list[Product]:
+        """Return only products that satisfy all constraints."""
         return [p for p in products if self.product_satisfies(p)]
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize constraints to dictionary."""
+    def to_dict(self) -> dict:
+        """Serialize to dictionary, excluding None values."""
         return {k: v for k, v in asdict(self).items() if v is not None}
 
     def __str__(self) -> str:

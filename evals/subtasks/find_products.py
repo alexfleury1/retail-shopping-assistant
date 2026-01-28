@@ -23,17 +23,9 @@ class FindProductsSubtask(Subtask):
         context: "ExecutionContext"
     ) -> str:
         """Generate a product search query incorporating constraints."""
-        if constraints.category:
-            base = f"Show me some {constraints.category}"
-        elif constraints.subcategory:
-            base = f"Show me some {constraints.subcategory}"
-        else:
-            base = "Show me some products"
-
+        base = f"Show me some {constraints.category or constraints.subcategory or 'products'}"
         modifiers = constraints.to_query_modifiers()
-        if modifiers:
-            return f"{base} {' '.join(modifiers)}"
-        return base
+        return f"{base} {' '.join(modifiers)}" if modifiers else base
 
     def verify(
         self,
@@ -51,7 +43,6 @@ class FindProductsSubtask(Subtask):
             )
 
         matching = constraints.filter_products(state.retrieved)
-
         if not matching:
             return SubtaskResult(
                 subtask_name=self.name,
@@ -65,10 +56,7 @@ class FindProductsSubtask(Subtask):
             subtask_name=self.name,
             passed=True,
             retrieved_products=matching,
-            data={
-                "retrieved_count": len(state.retrieved),
-                "matching_count": len(matching),
-            },
+            data={"retrieved_count": len(state.retrieved), "matching_count": len(matching)},
         )
 
     def produces_options(self) -> bool:

@@ -13,14 +13,14 @@ if TYPE_CHECKING:
 
 RemovalType = Literal["last", "specific", "all"]
 
+SUCCESS_INDICATORS = frozenset(["removed", "deleted", "taken out", "no longer"])
+
 
 class RemoveFromCartSubtask(Subtask):
     """User wants to remove an item from their cart."""
 
     name = "remove_from_cart"
     description = "Remove a product from the shopping cart"
-
-    SUCCESS_INDICATORS = frozenset(["removed", "deleted", "taken out", "no longer"])
 
     def __init__(self, removal_type: RemovalType = "last"):
         self.removal_type = removal_type
@@ -45,6 +45,7 @@ class RemoveFromCartSubtask(Subtask):
         """Verify the item was removed from cart."""
         from evals.core import SubtaskResult
 
+        # For "clear all", verify cart is empty
         if self.removal_type == "all":
             if state.cart and state.cart.contents:
                 return SubtaskResult(
@@ -52,15 +53,11 @@ class RemoveFromCartSubtask(Subtask):
                     passed=False,
                     error_message=f"Cart not empty after clear request, has {len(state.cart.contents)} items",
                 )
-            return SubtaskResult(
-                subtask_name=self.name,
-                passed=True,
-                data={"action": "cleared"},
-            )
+            return SubtaskResult(subtask_name=self.name, passed=True, data={"action": "cleared"})
 
         # For other removal types, check response for success indicators
         response_lower = (state.response or "").lower()
-        if any(indicator in response_lower for indicator in self.SUCCESS_INDICATORS):
+        if any(indicator in response_lower for indicator in SUCCESS_INDICATORS):
             return SubtaskResult(
                 subtask_name=self.name,
                 passed=True,

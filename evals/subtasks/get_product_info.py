@@ -13,23 +13,23 @@ if TYPE_CHECKING:
 
 InfoType = Literal["details", "price", "material", "comparison"]
 
+QUERY_TEMPLATES = {
+    "details": "Tell me more about that one",
+    "price": "How much does it cost?",
+    "material": "What is it made of?",
+    "comparison": "How does it compare to the others?",
+}
+
+MATERIAL_KEYWORDS = frozenset([
+    "made", "material", "fabric", "leather", "cotton", "polyester", "silk"
+])
+
 
 class GetProductInfoSubtask(Subtask):
     """User wants information about a product."""
 
     name = "get_product_info"
     description = "Get details about a specific product"
-
-    QUERY_TEMPLATES = {
-        "details": "Tell me more about that one",
-        "price": "How much does it cost?",
-        "material": "What is it made of?",
-        "comparison": "How does it compare to the others?",
-    }
-
-    MATERIAL_KEYWORDS = frozenset([
-        "made", "material", "fabric", "leather", "cotton", "polyester", "silk"
-    ])
 
     def __init__(self, info_type: InfoType = "details"):
         self.info_type = info_type
@@ -45,7 +45,7 @@ class GetProductInfoSubtask(Subtask):
                 return f"Tell me more about the {context.selected_product}"
             if self.info_type == "price":
                 return f"How much is the {context.selected_product}?"
-        return self.QUERY_TEMPLATES.get(self.info_type, self.QUERY_TEMPLATES["details"])
+        return QUERY_TEMPLATES.get(self.info_type, QUERY_TEMPLATES["details"])
 
     def verify(
         self,
@@ -65,7 +65,8 @@ class GetProductInfoSubtask(Subtask):
         response_lower = state.response.lower()
 
         if self.info_type == "price":
-            if "$" not in state.response and "price" not in response_lower and "cost" not in response_lower:
+            has_price = "$" in state.response or "price" in response_lower or "cost" in response_lower
+            if not has_price:
                 return SubtaskResult(
                     subtask_name=self.name,
                     passed=False,
@@ -73,7 +74,7 @@ class GetProductInfoSubtask(Subtask):
                 )
 
         if self.info_type == "material":
-            if not any(kw in response_lower for kw in self.MATERIAL_KEYWORDS):
+            if not any(kw in response_lower for kw in MATERIAL_KEYWORDS):
                 return SubtaskResult(
                     subtask_name=self.name,
                     passed=False,

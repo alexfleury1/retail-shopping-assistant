@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""AddToCart subtask: User wants a specific item in their cart."""
+"""AddToCart subtask: User wants to add an item to their cart."""
 
 from typing import TYPE_CHECKING, Optional
 from .base import Subtask
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class AddToCartSubtask(Subtask):
-    """User wants a specific item in their cart."""
+    """User wants to add an item to their cart."""
 
     name = "add_to_cart"
     description = "Add a product to the shopping cart"
@@ -21,7 +21,7 @@ class AddToCartSubtask(Subtask):
         """
         Args:
             explicit_product: If set, use this product name directly
-                             (for direct purchase intents where user knows exact product)
+                             (for direct purchase intents)
         """
         self.explicit_product = explicit_product
 
@@ -54,9 +54,8 @@ class AddToCartSubtask(Subtask):
 
         last_item = state.cart.contents[-1]
 
-        # If we have an explicit product, verify the exact product was added
+        # If explicit product specified, verify exact match
         if self.explicit_product:
-            # Check if the product name matches (case-insensitive, partial match allowed)
             if self.explicit_product.lower() not in last_item.name.lower():
                 return SubtaskResult(
                     subtask_name=self.name,
@@ -81,6 +80,5 @@ class AddToCartSubtask(Subtask):
                 "added_item": last_item.name,
                 "price": last_item.price,
                 "cart_size": len(state.cart.contents),
-                "expected_product": self.explicit_product,
             },
         )

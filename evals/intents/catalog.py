@@ -4,11 +4,11 @@
 """
 Predefined intent catalog.
 
-This module defines the standard intents used for evaluation,
-ranging from simple browsing to complex multi-step shopping journeys.
+Defines standard intents from simple browsing to complex multi-step shopping journeys.
 """
 
 from typing import Optional
+
 from .base import Intent, DecisionPolicy
 from evals.subtasks import (
     FindProductsSubtask,
@@ -29,26 +29,18 @@ BROWSE = Intent(
     decision_policy=DecisionPolicy(strategy="first"),
 )
 
+
 def create_direct_purchase_intent(product_name: Optional[str] = None) -> Intent:
-    """
-    Create a direct purchase intent for a specific product.
-
-    Args:
-        product_name: The exact product name to add to cart.
-                     If None, uses a placeholder (will fail - use for testing error handling).
-
-    Returns:
-        Intent configured for direct purchase of the specified product.
-    """
+    """Create a direct purchase intent for a specific product."""
     return Intent(
         name="direct_purchase",
-        description=f"User knows exactly what they want ({product_name}) and adds it directly",
+        description=f"User adds {product_name or 'a product'} directly to cart",
         subtasks=[AddToCartSubtask(explicit_product=product_name)],
         decision_policy=DecisionPolicy(strategy="by_name", target_name=product_name),
     )
 
 
-# Default direct purchase intent (placeholder - should use create_direct_purchase_intent with a product)
+# Default direct purchase intent - generator will override with random products
 DIRECT_PURCHASE = create_direct_purchase_intent("Pearl Bracelet")
 
 
@@ -59,10 +51,7 @@ DIRECT_PURCHASE = create_direct_purchase_intent("Pearl Bracelet")
 DISCOVER_AND_BUY = Intent(
     name="discover_and_buy",
     description="User browses, selects, and purchases",
-    subtasks=[
-        FindProductsSubtask(),
-        AddToCartSubtask(),
-    ],
+    subtasks=[FindProductsSubtask(), AddToCartSubtask()],
     decision_policy=DecisionPolicy(strategy="cheapest"),
 )
 
@@ -99,7 +88,7 @@ OUTFIT_BUILDING = Intent(
     subtasks=[
         FindProductsSubtask(),
         AddToCartSubtask(),
-        FindProductsSubtask(),  # Find complementary item
+        FindProductsSubtask(),
         AddToCartSubtask(),
     ],
     decision_policy=DecisionPolicy(strategy="first"),
@@ -149,33 +138,14 @@ INTENT_BY_NAME = {intent.name: intent for intent in ALL_INTENTS}
 
 
 def get_intent(name: str) -> Intent:
-    """
-    Get an intent by name.
-
-    Args:
-        name: Intent name
-
-    Returns:
-        Intent object
-
-    Raises:
-        KeyError: If intent not found
-    """
+    """Get an intent by name. Raises KeyError if not found."""
     if name not in INTENT_BY_NAME:
         raise KeyError(f"Unknown intent: {name}. Available: {list(INTENT_BY_NAME.keys())}")
     return INTENT_BY_NAME[name]
 
 
-def get_intents_by_complexity(max_subtasks: int = None) -> list[Intent]:
-    """
-    Get intents filtered by complexity.
-
-    Args:
-        max_subtasks: Maximum number of subtasks (None for all)
-
-    Returns:
-        List of intents
-    """
+def get_intents_by_complexity(max_subtasks: Optional[int] = None) -> list[Intent]:
+    """Get intents filtered by max number of subtasks."""
     if max_subtasks is None:
         return ALL_INTENTS
     return [i for i in ALL_INTENTS if len(i.subtasks) <= max_subtasks]
